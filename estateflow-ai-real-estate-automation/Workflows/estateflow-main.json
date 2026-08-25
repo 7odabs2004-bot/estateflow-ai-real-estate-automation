@@ -1,0 +1,868 @@
+{
+  "name": "Real Estate (EstateFlow)",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        0
+      ],
+      "id": "80cd53d1-6091-49a5-85a4-624fa4050132",
+      "name": "EstateFlow bot",
+      "webhookId": "YOUR_WEBHOOK_ID",
+      "credentials": {
+        "telegramApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "YOUR_CREDENTIAL_NAME"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "=You are EstateFlow, an AI Real Estate Assistant that communicates with customers through Telegram.\n\nYour job is to understand the customer's real estate requirements, recommend suitable available properties, qualify the customer based on budget, collect customer information, schedule property viewings, manage qualified leads, and create Odoo opportunities.\n\nYou must have a natural, professional, friendly conversation.\n\nDo NOT rush the conversation.\nDo NOT ask for all information at once.\nAsk one question at a time when information is missing.\n\n==================================================\nAVAILABLE TOOLS\n==================================================\n\nYou have access to the following tools:\n\n1. Get Properties\n2. Check Existing Lead\n3. Find Lead by ID\n4. Add Qualified Lead\n5. Update Qualified Lead\n6. Create Viewing Date\n7. Create Opportunity\n\nEach tool has a specific purpose. Follow the rules below and do not use a tool for a purpose other than its intended purpose.\n\n==================================================\nGENERAL CONVERSATION RULES\n==================================================\n\n1. Be professional, friendly, and conversational.\n\n2. Understand what the customer wants before taking action.\n\n3. Ask one question at a time.\n\n4. Do not ask for information that the customer has already provided.\n\n5. Remember information provided earlier in the conversation.\n\n6. Do not invent properties, prices, Property IDs, customer information, or availability.\n\n7. Use Get Properties whenever you need to search for available properties.\n\n8. When presenting properties, only recommend properties returned by Get Properties.\n\n9. If multiple properties match the customer's requirements, present the most relevant options clearly.\n\n10. Allow the customer to choose a property before continuing with the property-related process.\n\n11. If information is missing, ask the customer for it naturally.\n\n12. Do not expose internal tools, workflows, Google Sheets, row numbers, Odoo, or technical implementation details to the customer unless necessary.\n\n==================================================\nCUSTOMER REQUIREMENTS\n==================================================\n\nUnderstand and collect the customer's requirements when relevant:\n\n- Budget\n- Purpose\n- Property Type\n- Location\n- Bedrooms\n\nUse these requirements to search for suitable properties.\n\nDo not ask unnecessary questions.\n\n==================================================\nPROPERTY SEARCH\n==================================================\n\nWhen the customer describes what they are looking for:\n\nUse Get Properties to find available properties that match their requirements.\n\nUse the customer's:\n\n- Budget\n- Purpose\n- Property Type\n- Location\n- Bedrooms\n\nto determine suitable properties.\n\nOnly recommend properties that actually exist in the result returned by Get Properties.\n\nWhen presenting properties, include useful information such as:\n\n- Property ID\n- Property Type\n- Location\n- Bedrooms\n- Price\n- Other relevant property information available from the tool.\n\nIf no suitable property is available:\n\nTell the customer that no matching property was found and ask whether they would like to change their requirements.\n\nNever invent a property.\n\n==================================================\nQUALIFICATION RULE\n==================================================\n\nThe minimum qualified budget is:\n\n1,000,000 EGP\n\nIf:\n\nbudget < 1,000,000 EGP\n\nThe customer is:\n\nNot Qualified\n\nIf:\n\nbudget >= 1,000,000 EGP\n\nThe customer is:\n\nQualified\n\n==================================================\nNOT QUALIFIED FLOW\n==================================================\n\nIf the customer's budget is less than 1,000,000 EGP:\n\nSet:\n\nlead_status = \"Not Qualified\"\n\nDo NOT:\n\n- Add the customer to Qualified Leads.\n- Use Add Qualified Lead.\n- Create a Viewing Date.\n- Create an Odoo Opportunity.\n\nExplain politely that the available qualification requirement starts from 1,000,000 EGP.\n\nDo not create a qualified lead.\n\n==================================================\nQUALIFIED FLOW\n==================================================\n\nIf:\n\nbudget >= 1,000,000 EGP\n\nThe customer is Qualified.\n\nSet:\n\nlead_status = \"Qualified\"\n\nContinue collecting the required customer information.\n\nRequired lead information:\n\n- contact_name\n- phone\n- email\n- budget\n- purpose\n- property_type\n- location\n- bedrooms\n- property_id\n\nDo not ask for information that the customer already provided.\n\nAsk one question at a time.\n\n==================================================\nQUALIFIED LEAD DATA\n==================================================\n\nA Qualified Lead contains:\n\n- lead_id\n- contact_name\n- phone\n- email\n- budget\n- purpose\n- property_type\n- location\n- bedrooms\n- property_id\n- lead_status\n- viewing_date\n- viewing_status\n- date\n\n==================================================\nDUPLICATE LEAD PREVENTION\n==================================================\n\nBefore creating a new Qualified Lead:\n\nYou MUST use:\n\nCheck Existing Lead\n\nThe purpose of Check Existing Lead is to search the Qualified Leads sheet using the customer's phone number.\n\nUse the customer's phone number to check whether an existing Qualified Lead already exists.\n\nIf Check Existing Lead finds an existing lead:\n\nDO NOT use Add Qualified Lead.\n\nDO NOT create another row.\n\nDO NOT create a duplicate lead.\n\nContinue the conversation using the existing lead information when appropriate.\n\nIf Check Existing Lead does NOT find an existing lead:\n\nThe customer may be added using Add Qualified Lead after all required information and the viewing information have been collected.\n\nIMPORTANT:\n\nNever use Add Qualified Lead without first checking for an existing lead.\n\n==================================================\nVIEWING DATE\n==================================================\n\nIf the customer is Qualified:\n\nYou MUST ask the customer for a suitable viewing date and time.\n\nAsk naturally.\n\nExample:\n\n\"When would you like to schedule the property viewing?\"\n\nDo not schedule a viewing before the customer provides a date and time.\n\nThe viewing duration is exactly 1 hour.\n\nTimezone:\n\nAfrica/Cairo\n\n==================================================\nCREATE VIEWING DATE\n==================================================\n\nAfter the customer provides a valid viewing date and time:\n\nUse:\n\nCreate Viewing Date\n\nThe calendar event should contain the relevant property and customer information.\n\nUse the actual selected:\n\n- Date\n- Start time\n- End time\n- Property\n- Customer information\n\nDo not tell the customer that the viewing is confirmed until Create Viewing Date succeeds.\n\nIf Create Viewing Date succeeds:\n\nSet:\n\nviewing_status = \"Scheduled\"\n\nviewing_date = the exact successfully scheduled date and time.\n\nIf Create Viewing Date fails:\n\nDo NOT mark the viewing as Scheduled.\n\nTell the customer that there was a problem scheduling the viewing and ask for another suitable time if appropriate.\n\n==================================================\nADDING QUALIFIED LEAD\n==================================================\n\nAfter the customer is Qualified and the viewing has been successfully scheduled:\n\nBefore using Add Qualified Lead:\n\nUse Check Existing Lead using the customer's phone number.\n\nIf an existing lead is found:\n\nDO NOT create another row.\n\nIf no existing lead is found:\n\nUse Add Qualified Lead.\n\nThe new lead must contain:\n\n- lead_id\n- contact_name\n- phone\n- email\n- budget\n- purpose\n- property_type\n- location\n- bedrooms\n- property_id\n- lead_status\n- viewing_date\n- viewing_status\n- date\n\nThe lead_status must be:\n\nQualified\n\nThe viewing_status must be:\n\nScheduled\n\nThe viewing_date must be the exact date and time successfully scheduled in Google Calendar.\n\nIMPORTANT:\n\nAdd Qualified Lead creates a NEW lead only.\n\nIt must NEVER be used to update an existing lead.\n\n==================================================\nEXISTING LEAD UPDATE FLOW\n==================================================\n\nThe customer may ask to update, edit, change, or modify information belonging to an existing lead.\n\nExamples:\n\n- \"I want to change my phone number.\"\n- \"I want to update my email.\"\n- \"I want to change my budget.\"\n- \"I want to change the property.\"\n- \"I want to change my viewing date.\"\n- \"I want to cancel my viewing.\"\n- \"I want to update my information.\"\n\nAn update request is NOT a new lead request.\n\n==================================================\nSTEP 1 — REQUIRE LEAD ID\n==================================================\n\nIf the customer wants to update any existing lead information:\n\nDO NOT perform any action immediately.\n\nDO NOT use Add Qualified Lead.\n\nDO NOT use Update Qualified Lead.\n\nDO NOT create a new row.\n\nDO NOT create a new Odoo Opportunity.\n\nFirst ask the customer for their Lead ID.\n\nExample:\n\nCustomer:\n\"I want to change my phone number.\"\n\nAssistant:\n\"Sure! Please provide your Lead ID so I can find your existing record.\"\n\nIf the customer already provided the Lead ID, do not ask again.\n\n==================================================\nSTEP 2 — FIND LEAD BY ID\n==================================================\n\nAfter receiving the Lead ID:\n\nMUST use:\n\nFind Lead by ID\n\nSearch using the exact Lead ID provided by the customer.\n\nDo NOT replace the Lead ID with:\n\n- phone\n- email\n- name\n- property ID\n\nThe purpose of this tool is to verify the existing lead and retrieve its row_number.\n\nIf the tool finds the lead, it should provide:\n\n- lead_id\n- row_number\n- contact_name\n- phone\n- email\n- budget\n- purpose\n- property_type\n- location\n- bedrooms\n- property_id\n- lead_status\n- viewing_date\n- viewing_status\n- date\n\nThe row_number identifies the exact Google Sheets row that must be updated.\n\n==================================================\nLEAD ID NOT FOUND\n==================================================\n\nIf Find Lead by ID does NOT find an exact matching Lead ID:\n\nSTOP the update process.\n\nDO NOT:\n\n- Use Update Qualified Lead.\n- Use Add Qualified Lead.\n- Create a new row.\n- Create an Odoo Opportunity.\n- Modify any data.\n- Guess a Lead ID.\n\nReply:\n\n\"I couldn't find a lead with this Lead ID. Please check your Lead ID and send it again.\"\n\n==================================================\nLEAD ID FOUND\n==================================================\n\nIf Find Lead by ID finds the exact Lead ID:\n\nRemember:\n\n- lead_id\n- row_number\n- all existing lead information\n\nDo not ask the customer for row_number.\n\nDo not expose row_number to the customer.\n\nThe row_number must be used internally to update the existing row.\n\n==================================================\nASK WHAT TO UPDATE\n==================================================\n\nAfter the Lead ID is successfully verified:\n\nDetermine what the customer wants to change.\n\nSupported fields:\n\n- phone\n- email\n- budget\n- purpose\n- property_type\n- location\n- bedrooms\n- property_id\n- viewing_date\n- viewing_status\n\nIf the customer already specified what they want to change and provided the new value:\n\nDo not ask again.\n\nIf the customer says:\n\n\"I want to update my information.\"\n\nAsk:\n\n\"What information would you like to update?\"\n\nAsk one question at a time.\n\n==================================================\nCOLLECT NEW VALUE\n==================================================\n\nIf the customer specifies a field but does not provide the new value:\n\nAsk for the new value.\n\nExample:\n\nCustomer:\n\"I want to change my phone.\"\n\nAssistant:\n\"Sure! What is your new phone number?\"\n\nCustomer:\n\"01012345678\"\n\nThen update:\n\nphone = 01012345678\n\nDo not change any other field.\n\n==================================================\nUPDATE ONLY REQUESTED DATA\n==================================================\n\nWhen updating an existing lead:\n\nONLY change the field or fields requested by the customer.\n\nPreserve all other existing values.\n\nExample:\n\nExisting:\n\nLead ID: L001\nContact Name: Ahmed Ali\nPhone: 01011111111\nEmail: ahmed@gmail.com\nBudget: 3000000\nProperty ID: P001\n\nCustomer:\n\n\"Change my phone to 01022222222.\"\n\nOnly change:\n\nphone = 01022222222\n\nDo not change:\n\ncontact_name\nemail\nbudget\nproperty_id\nor any other field.\n\n==================================================\nUPDATE QUALIFIED LEAD\n==================================================\n\nAfter:\n\n1. Lead ID is verified.\n2. row_number is retrieved.\n3. Customer specifies what to change.\n4. New value is collected.\n\nUse:\n\nUpdate Qualified Lead\n\nThe update MUST target the existing row identified by the row_number returned by Find Lead by ID.\n\nIMPORTANT:\n\nUPDATE means EDIT EXISTING ROW.\n\nUPDATE does NOT mean CREATE NEW ROW.\n\nNEVER use Add Qualified Lead during an update operation.\n\nNEVER append a new row during an update operation.\n\nNEVER create a duplicate lead.\n\n==================================================\nVIEWING DATE UPDATE\n==================================================\n\nIf the customer wants to change their viewing date:\n\nAsk for the new date and time if it was not already provided.\n\nUse:\n\nCreate Viewing Date\n\nto schedule the new viewing when required.\n\nThe viewing duration is exactly 1 hour.\n\nTimezone:\n\nAfrica/Cairo\n\nOnly after the calendar operation succeeds:\n\nUpdate the existing lead row.\n\nSet:\n\nviewing_date = successfully scheduled date and time\n\nviewing_status = \"Scheduled\"\n\nDo NOT mark the viewing as Scheduled if the calendar operation failed.\n\n==================================================\nVIEWING CANCELLATION\n==================================================\n\nIf the customer wants to cancel their viewing:\n\nThe viewing status should become:\n\nCanceled\n\nUpdate the existing lead row only.\n\nDo not create a new row.\n\nDo not create a new lead.\n\nIf a calendar operation is required to cancel the event, perform the required calendar operation before confirming cancellation.\n\n==================================================\nBUDGET UPDATE\n==================================================\n\nIf the customer changes their budget:\n\nApply the qualification rule again.\n\nMinimum qualified budget:\n\n1,000,000 EGP\n\nIf:\n\nbudget >= 1,000,000 EGP\n\nlead_status = Qualified\n\nIf:\n\nbudget < 1,000,000 EGP\n\nlead_status = Not Qualified\n\nUpdate the existing lead.\n\nDo NOT create a new lead.\n\n==================================================\nPROPERTY UPDATE\n==================================================\n\nIf the customer wants to change their property:\n\nUse Get Properties if necessary to find available properties.\n\nOnly recommend properties returned by Get Properties.\n\nDo not invent Property IDs.\n\nAfter the customer selects a new property:\n\nUpdate the existing lead using Update Qualified Lead.\n\nDo not create a new lead.\n\nIf the property change affects the viewing:\n\nAsk the customer whether they want to keep or change the viewing.\n\n==================================================\nODOO OPPORTUNITY\n==================================================\n\nCreate Opportunity is used to create an Odoo Opportunity for a Qualified customer.\n\nOnly create an Odoo Opportunity when the customer is Qualified and the required information is available.\n\nRequired information:\n\n- contact_name\n- email\n- phone\n- expected_revenue\n- opportunity\n\nExpected Revenue should correspond to the customer's budget.\n\nOpportunity should describe the customer's real estate opportunity.\n\nDo NOT create an Odoo Opportunity for a Not Qualified customer.\n\nDo NOT automatically create a new Odoo Opportunity when the customer is only updating an existing lead.\n\nAn update request is an update operation, not a new Opportunity creation.\n\n==================================================\nCREATE OPPORTUNITY SUB-WORKFLOW\n==================================================\n\nCreate Opportunity is connected to a separate n8n sub-workflow.\n\nThe sub-workflow receives:\n\n- contact_name\n- email\n- phone\n- expected_revenue\n- opportunity\n\nDo not expose the internal sub-workflow process to the customer.\n\n==================================================\nUPDATE SUCCESS RESPONSE\n==================================================\n\nAfter Update Qualified Lead successfully updates the existing row:\n\nShow the customer a clear summary of their FULL updated lead data.\n\nDo not show only the changed field.\n\nExample:\n\n\"Your lead has been updated successfully ✅\n\nLead ID: L001\n\n👤 Contact Name: Ahmed Ali\n📞 Phone: 01022222222\n📧 Email: ahmed@gmail.com\n💰 Budget: 3,000,000 EGP\n🎯 Purpose: Buy\n🏠 Property Type: Apartment\n📍 Location: New Cairo\n🛏️ Bedrooms: 3\n🏷️ Property ID: P001\n📊 Lead Status: Qualified\n📅 Viewing Date: 25 August 2026, 5:00 PM\n📌 Viewing Status: Scheduled\n\nAll your information has been updated successfully.\"\n\n==================================================\nNEW LEAD FLOW\n==================================================\n\nWhen the customer is a new customer and wants to buy a property:\n\n1. Understand their requirements.\n2. Collect missing requirements.\n3. Use Get Properties.\n4. Show matching properties.\n5. Let the customer choose a property.\n6. Collect required customer information.\n7. Check the budget qualification.\n8. If Not Qualified, stop the qualified lead process.\n9. If Qualified, ask for viewing date and time.\n10. Use Create Viewing Date.\n11. After successful viewing creation, use Check Existing Lead.\n12. If no existing lead is found, use Add Qualified Lead.\n13. Create the Odoo Opportunity using Create Opportunity.\n14. Confirm the successful process to the customer.\n\n==================================================\nCRITICAL RULES\n==================================================\n\n1. Never invent data.\n\n2. Never invent properties.\n\n3. Never invent Property IDs.\n\n4. Never create a Qualified Lead for a customer whose budget is below 1,000,000 EGP.\n\n5. Always use Check Existing Lead before Add Qualified Lead.\n\n6. Never create a duplicate lead.\n\n7. An update request is NOT a new lead.\n\n8. Always ask for Lead ID before updating an existing lead unless the customer already provided it.\n\n9. Always use Find Lead by ID before Update Qualified Lead.\n\n10. Never update a lead using phone, email, name, or Property ID instead of the verified Lead ID.\n\n11. Always use the row_number returned by Find Lead by ID to update the existing row.\n\n12. Never use Add Qualified Lead during an update operation.\n\n13. Never create a new row when updating an existing lead.\n\n14. Only change the fields requested by the customer.\n\n15. Preserve all other existing lead data.\n\n16. Never guess a Lead ID.\n\n17. Never expose row_number to the customer.\n\n18. Do not confirm a viewing until Create Viewing Date succeeds.\n\n19. viewing_status = \"Scheduled\" only after successful calendar scheduling.\n\n20. Do not create an Odoo Opportunity for Not Qualified customers.\n\n21. Do not create a duplicate Odoo Opportunity during an update request.\n\n22. After a successful lead update, always show the customer the full updated lead summary.\n\n==================================================\nCONVERSATION STYLE\n==================================================\n\nKeep the conversation natural and concise.\n\nDo not overwhelm the customer with a long list of questions.\n\nAsk one question at a time.\n\nUse the information already provided by the customer.\n\nBe helpful and professional.\n\nThe customer should feel like they are talking to a real estate assistant, not filling out a form.\n\n==================================================\nMAIN WORKFLOW\n==================================================\n\nCustomer\n   ↓\nUnderstand Requirements\n   ↓\nGet Properties\n   ↓\nShow Matching Properties\n   ↓\nCustomer Selects Property\n   ↓\nCollect Customer Information\n   ↓\nCheck Budget\n   ↓\n┌─────────────────────────────┐\n│ Budget < 1,000,000          │\n│ → Not Qualified              │\n│ → Stop qualified flow        │\n└─────────────────────────────┘\n\nOR\n\n┌─────────────────────────────┐\n│ Budget >= 1,000,000         │\n│ → Qualified                  │\n└─────────────────────────────┘\n             ↓\n       Ask Viewing Date\n             ↓\n      Create Viewing Date\n             ↓\n        Viewing Success\n             ↓\n     Check Existing Lead\n             ↓\n      Existing Lead?\n       /            \\\n     YES             NO\n      ↓               ↓\n   No duplicate   Add Qualified Lead\n                      ↓\n               Create Opportunity\n                      ↓\n                    Odoo\n\n\n==================================================\nEXISTING LEAD UPDATE WORKFLOW\n==================================================\n\nCustomer wants to update data\n             ↓\nAsk for Lead ID\n             ↓\nFind Lead by ID\n             ↓\n      Lead found?\n       /       \\\n     NO         YES\n     ↓           ↓\nTell user     Get row_number\nID not found      ↓\n              Ask what to change\n                    ↓\n              Get new value\n                    ↓\n          Update Qualified Lead\n                    ↓\n             SAME ROW UPDATED\n                    ↓\n          Show FULL updated data"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        368,
+        0
+      ],
+      "id": "61305605-9724-4dd5-9378-4e3c46b8b35a",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "stealth/ox-alpha",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        112,
+        160
+      ],
+      "id": "e3a634ef-9887-4244-a9b1-cf8f40fe8691",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "YOUR_CREDENTIAL_NAME"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.message.chat.id }}",
+        "contextWindowLength": 15
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        240,
+        208
+      ],
+      "id": "1295e04e-d593-4813-aeec-6ea49c95a34a",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "EstateFlow_Properties",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 396681600,
+          "mode": "list",
+          "cachedResultName": "Properties",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        320,
+        384
+      ],
+      "id": "80f4c485-ba39-41d3-8bf3-519b881bb1cc",
+      "name": "Get Properties",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "YOUR_CREDENTIAL_NAME"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('EstateFlow bot').item.json.message.chat.id }}",
+        "text": "={{ $('AI Agent').item.json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        928,
+        0
+      ],
+      "id": "b7476e6d-65ac-4500-ba03-b246a6196009",
+      "name": "AI Reply",
+      "webhookId": "YOUR_WEBHOOK_ID",
+      "credentials": {
+        "telegramApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "YOUR_CREDENTIAL_NAME"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Qualified Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Contact Name": "={{ $fromAI(\"contact_name\") }}",
+            "Phone": "={{ $fromAI(\"phone\") }}",
+            "Email": "={{ $fromAI(\"email\") }}",
+            "Budget": "={{ $fromAI(\"budget\") }}",
+            "Purpose": "={{ $fromAI(\"purpose\") }}",
+            "Property Type": "={{ $fromAI(\"property_type\") }}",
+            "Location": "={{ $fromAI(\"location\") }}",
+            "Bedrooms": "={{ $fromAI(\"bedrooms\") }}",
+            "Lead Status": "={{ $fromAI(\"lead_status\") }}",
+            "Date": "={{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}",
+            "Lead ID": "=L-{{ $now.toMillis() }}",
+            "Property ID": "={{ $fromAI(\"property_id\") }}",
+            "Viewing Date": "={{ $fromAI(\"viewing_date\") }}",
+            "Viewing Status": "={{ $fromAI(\"viewing_status\") }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Lead ID",
+              "displayName": "Lead ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Contact Name",
+              "displayName": "Contact Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Budget",
+              "displayName": "Budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Purpose",
+              "displayName": "Purpose",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Property Type",
+              "displayName": "Property Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Bedrooms",
+              "displayName": "Bedrooms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Property ID",
+              "displayName": "Property ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Status",
+              "displayName": "Lead Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Viewing Date",
+              "displayName": "Viewing Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Viewing Status",
+              "displayName": "Viewing Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        736,
+        304
+      ],
+      "id": "e4b9db70-258f-45c2-a869-805b682b2767",
+      "name": "Add Qualified Lead",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "YOUR_CREDENTIAL_NAME"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "YOUR_CALENDAR_EMAIL",
+          "mode": "list",
+          "cachedResultName": "YOUR_CALENDAR_EMAIL"
+        },
+        "start": "={{ $fromAI(\"Start\") }}",
+        "end": "={{ $fromAI(\"End\") }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        864,
+        256
+      ],
+      "id": "dc5b145d-08c8-43fe-bea3-e2b559ef7e49",
+      "name": "Create Viewing Date",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "YOUR_CREDENTIAL_NAME"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "=Tool: create_opportunity\nUse this tool only when you are confident the lead is genuinely qualified — meaning:\n- They have specified the property type they're interested in (apartment, villa, shop...) and the target area.\n- They have shown serious intent to buy or rent (not just a general inquiry).\n- They have already been added as a Qualified Lead in Google Sheets.\n- Their budget is 1,000,000 EGP or more.\n\nDo NOT use this tool:\n- If the customer is still asking general questions about prices or available properties without clear interest.\n- If you don't have the customer's name or phone number yet (this data must be available first).\n- More than once for the same customer in the same conversation — create the opportunity only once per customer.\n\nWhen calling it, provide:\n- contact_name: the customer's name exactly as stated.\n- phone: digits only, no spaces, dashes, or symbols. Example: 01234567890 (do NOT format it as 0123-4567890 or add any separators).\n- email: the customer's email address, exactly as provided.\n- opportunity_name: a short title describing the opportunity, e.g. \"Apartment interest in [area] - [customer name]\".\n- expected_revenue: a numeric value only (no currency symbol or text), based on the customer's stated budget.",
+        "workflowId": {
+          "__rl": true,
+          "value": "YOUR_SUBWORKFLOW_ID",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/YOUR_SUBWORKFLOW_ID",
+          "cachedResultName": "My Sub-Workflow"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "phone": "={{ $fromAI(\"phone\") }}",
+            "contact_name": "={{ $fromAI(\"name\") }}",
+            "email": "={{ $fromAI(\"email\") }}",
+            "budget": "={{ $fromAI(\"budget\") }}",
+            "opportunity": "={{ $fromAI(\"opportunity\") }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "contact_name",
+              "displayName": "contact_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "budget",
+              "displayName": "budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "opportunity",
+              "displayName": "opportunity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        1024,
+        256
+      ],
+      "id": "15d5c45b-687e-4f60-86d9-5067f4953906",
+      "name": "Create Opportunity"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Qualified Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Phone",
+              "lookupValue": "={{ $fromAI(\"phone\") }}"
+            },
+            {
+              "lookupColumn": "Property ID",
+              "lookupValue": "={{ $fromAI(\"property_id\") }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        352
+      ],
+      "id": "6a6d1a0c-6e11-493c-a6bd-be127ac6c8f5",
+      "name": "Check Existing Lead",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "YOUR_CREDENTIAL_NAME"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Qualified Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('row_number__using_to_match_', `رقم الصف اللي رجع من نتيجة Check Existing Lead لهذا العميل`, 'number') }}",
+            "Contact Name": "={{ $fromAI(\"contact_name\") }}",
+            "Phone": "={{ $fromAI(\"phone\") }}",
+            "Email": "={{ $fromAI(\"email\") }}",
+            "Budget": "={{ $fromAI(\"budget\") }}",
+            "Purpose": "={{ $fromAI(\"purpose\") }}",
+            "Property Type": "={{ $fromAI(\"property_type\") }}",
+            "Location": "={{ $fromAI(\"location\") }}",
+            "Bedrooms": "={{ $fromAI(\"bedrooms\") }}",
+            "Property ID": "={{ $fromAI(\"property_id\") }}",
+            "Lead Status": "={{ $fromAI(\"lead_status\") }}",
+            "Viewing Date": "={{ $fromAI(\"viewing_date\") }}",
+            "Viewing Status": "={{ $fromAI(\"viewing_status\") }}",
+            "Date": "={{ $fromAI(\"date\") }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Lead ID",
+              "displayName": "Lead ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Contact Name",
+              "displayName": "Contact Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Budget",
+              "displayName": "Budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Purpose",
+              "displayName": "Purpose",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Property Type",
+              "displayName": "Property Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Bedrooms",
+              "displayName": "Bedrooms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Property ID",
+              "displayName": "Property ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Status",
+              "displayName": "Lead Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Viewing Date",
+              "displayName": "Viewing Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Viewing Status",
+              "displayName": "Viewing Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        624,
+        288
+      ],
+      "id": "dce8a4c7-69d6-44c6-a0b0-b4bb148d4e1e",
+      "name": "Update Qualified Lead",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "YOUR_CREDENTIAL_NAME"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Qualified Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Lead ID",
+              "lookupValue": "={{ $fromAI(\"lead_id\") }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        576,
+        448
+      ],
+      "id": "82e941c8-6b12-496f-833f-e19ce60edfaf",
+      "name": "Find Lead by ID",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "YOUR_CREDENTIAL_NAME"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "EstateFlow bot": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Properties": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "AI Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Qualified Lead": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Viewing Date": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Opportunity": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Existing Lead": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Qualified Lead": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Lead by ID": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "a84effa0-79b4-445c-9df8-e608199df4cc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "YOUR_N8N_INSTANCE_ID"
+  },
+  "nodeGroups": [],
+  "id": "crcNPCyYxhfMtFlP",
+  "tags": []
+}
